@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Sabi — Muzikë falas</title>
+<link rel="preconnect" href="https://discoveryprovider.audius.co">
+<style>
+  :root {
+    --bg-top: #1a1638;
+    --bg-bottom: #121028;
+    --surface: rgba(255, 255, 255, 0.06);
+    --surface-strong: rgba(255, 255, 255, 0.1);
+    --stroke: rgba(255, 255, 255, 0.1);
+    --text: #f5f3ff;
+    --text-dim: #a8a3c7;
+    --accent: #FA9422;
+    --accent-dim: rgba(250, 148, 34, 0.15);
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+    background-attachment: fixed;
+    color: var(--text);
+    min-height: 100dvh;
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
+  }
+
+  .app-header {
+    padding: calc(16px + env(safe-area-inset-top)) 20px 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: linear-gradient(180deg, rgba(26, 22, 56, 0.95), rgba(26, 22, 56, 0.75) 70%, rgba(26, 22, 56, 0));
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .logo-badge {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(250, 148, 34, 0.35);
+  }
+  .logo-badge svg { width: 20px; height: 20px; fill: #fff; }
+
+  .app-title { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; }
+  .app-subtitle { font-size: 12px; color: var(--text-dim); margin-top: 1px; }
+
+  .tabs {
+    display: flex;
+    gap: 8px;
+    padding: 12px 20px 4px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+
+  .tab-btn {
+    flex: 1;
+    border: 1px solid var(--stroke);
+    background: var(--surface);
+    color: var(--text-dim);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    padding: 10px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .tab-btn svg { width: 16px; height: 16px; fill: currentColor; }
+  .tab-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(250, 148, 34, 0.3);
+  }
+
+  main { padding: 12px 20px 20px; max-width: 680px; margin: 0 auto; }
+
+  .section-title { font-size: 17px; font-weight: 700; margin: 16px 0 12px; letter-spacing: -0.2px; }
+
+  .search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--stroke);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin: 8px 0 4px;
+  }
+  .search-wrap svg { width: 18px; height: 18px; fill: var(--text-dim); flex-shrink: 0; }
+  .search-wrap input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font: inherit;
+    font-size: 15px;
+  }
+  .search-wrap input::placeholder { color: var(--text-dim); }
+
+  .track-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 16px;
+  }
+
+  /* ===== Karta si YouTube ===== */
+  .card { display: flex; flex-direction: column; gap: 8px; }
+  .card-media {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--surface-strong);
+    aspect-ratio: 16 / 9;
+  }
+  .card-art { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card-dur {
+    position: absolute;
+    right: 6px; bottom: 6px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 6px;
+  }
+  .card-play {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 44px; height: 44px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(250, 148, 34, 0.92);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    transition: transform 0.1s ease;
+  }
+  .card-play:active { transform: scale(0.88); }
+  .card-play svg { width: 20px; height: 20px; fill: #fff; margin-left: 2px; }
+  .card-heart, .card-dl {
+    position: absolute;
+    top: 6px;
+    width: 32px; height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .card-heart { right: 6px; }
+  .card-dl { left: 6px; }
+  .card-heart svg, .card-dl svg { width: 16px; height: 16px; fill: currentColor; }
+  .card-heart.on { color: var(--accent); }
+  .card-info { min-width: 0; }
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card-title.now-playing { color: var(--accent); }
+  .card-meta { font-size: 12px; color: var(--text-dim); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .track {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: var(--radius);
+    transition: background 0.15s ease;
+  }
+  .track:active, .track:hover { background: var(--surface); }
+
+  .track-art {
+    width: 56px; height: 56px;
+    border-radius: 10px;
+    object-fit: cover;
+    background: var(--surface-strong);
+    flex-shrink: 0;
+  }
+
+  .track-info { flex: 1; min-width: 0; }
+  .track-name {
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .track-name.now-playing { color: var(--accent); }
+  .track-artist {
+    font-size: 13px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+  }
+
+  .icon-btn {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: color 0.15s ease, transform 0.1s ease, background 0.15s ease;
+  }
+  .icon-btn:active { transform: scale(0.88); }
+  .icon-btn svg { width: 20px; height: 20px; fill: currentColor; }
+  .icon-btn.fav { color: var(--text-dim); }
+  .icon-btn.fav.on { color: var(--accent); }
+  .icon-btn.play-track { color: var(--accent); }
+  .icon-btn.play-track svg { width: 24px; height: 24px; }
+
+  .status {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 14px;
+    padding: 28px 16px;
+  }
+  .spinner {
+    width: 28px; height: 28px;
+    margin: 0 auto 12px;
+    border: 3px solid var(--stroke);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ===== Mini player ===== */
+  .mini-player {
+    position: fixed;
+    left: 0; right: 0;
+    bottom: 0;
+    z-index: 50;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    background: rgba(18, 16, 40, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid var(--stroke);
+    transform: translateY(110%);
+    transition: transform 0.25s ease;
+  }
+  .mini-player.visible { transform: translateY(0); }
+  .mini-player-inner {
+    max-width: 680px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .mp-art {
+    width: 46px; height: 46px;
+    border-radius: 10px;
+    object-fit: cover;
+    background: var(--surface-strong);
+    flex-shrink: 0;
+  }
+  .mp-info { flex: 1; min-width: 0; }
+  .mp-label { font-size: 10px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--accent); }
+  .mp-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mp-artist { font-size: 12px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mp-progress { height: 3px; background: var(--stroke); border-radius: 2px; margin-top: 5px; overflow: hidden; }
+  .mp-progress-bar { height: 100%; width: 0%; background: var(--accent); border-radius: 2px; transition: width 0.25s linear; }
+
+  .mp-play {
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(250, 148, 34, 0.35);
+    transition: transform 0.1s ease;
+  }
+  .mp-play:active { transform: scale(0.9); }
+  .mp-play svg { width: 20px; height: 20px; fill: currentColor; }
+
+  /* ===== API key screen ===== */
+  .gate {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .gate.hidden { display: none; }
+  .gate-card {
+    max-width: 420px;
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--stroke);
+    border-radius: 20px;
+    padding: 28px 24px;
+  }
+  .gate-card .logo-badge { margin-bottom: 16px; width: 48px; height: 48px; border-radius: 14px; }
+  .gate-card .logo-badge svg { width: 26px; height: 26px; }
+  .gate-title { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 8px; }
+  .gate-text { font-size: 14px; line-height: 1.55; color: var(--text-dim); margin-bottom: 18px; }
+  .gate-text a { color: var(--accent); font-weight: 600; text-decoration: none; }
+  .gate-input {
+    width: 100%;
+    background: var(--surface-strong);
+    border: 1px solid var(--stroke);
+    border-radius: 12px;
+    padding: 13px 14px;
+    color: var(--text);
+    font: inherit;
+    font-size: 15px;
+    outline: none;
+    margin-bottom: 8px;
+  }
+  .gate-input:focus { border-color: var(--accent); }
+  .gate-btn {
+    width: 100%;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 13px;
+    border-radius: 12px;
+    cursor: pointer;
+    margin-top: 6px;
+    box-shadow: 0 4px 14px rgba(250, 148, 34, 0.35);
+  }
+  .gate-error { color: #ff7a7a; font-size: 13px; margin-top: 10px; display: none; }
+  .pin-input {
+    text-align: center;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 10px;
+    padding-left: 20px;
+  }
+
+  .empty-state { text-align: center; color: var(--text-dim); font-size: 14px; padding: 30px 16px; line-height: 1.6; }
+
+  /* ===== Rreshti i artistëve ===== */
+  .chips {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 10px 0 6px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex-shrink: 0;
+    border: 1px solid var(--stroke);
+    background: var(--surface);
+    color: var(--text-dim);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 999px;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .chip:active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* ===== LED strip ===== */
+  .led-strip {
+    position: absolute;
+    top: -5px;
+    left: 0; right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 10px;
+    pointer-events: none;
+  }
+  .led {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    opacity: 0.18;
+  }
+  body.led-on.playing .led { animation: led-pulse 1.1s ease-in-out infinite; }
+  body:not(.led-on) .led-strip { display: none; }
+  @keyframes led-pulse {
+    0%, 100% { opacity: 0.2; transform: scale(0.75); }
+    50% { opacity: 1; transform: scale(1.35); }
+  }
+  .led-toggle { position: relative; color: var(--text-dim); font-size: 17px; }
+  .led-toggle.led-active { background: var(--accent-dim); color: var(--accent); }
+  .spin { animation: spin 0.9s linear infinite; }
+</style>
+</head>
+<body>
+
+<!-- ===== Hyrja me PIN ===== -->
+<div class="gate" id="gate">
+  <div class="gate-card">
+
+    <div id="pinStep">
+      <div class="logo-badge">
+        <svg viewBox="0 0 24 24"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm-3 8V6a3 3 0 1 1 6 0v3H9z"/></svg>
+      </div>
+      <div class="gate-title">Sabi</div>
+      <p class="gate-text">Fut PIN-in për të hyrë.</p>
+      <input class="gate-input pin-input" id="pinInput" type="password" inputmode="numeric" autocomplete="off" placeholder="••••" maxlength="4" spellcheck="false">
+      <button class="gate-btn" id="pinSubmit">Hyr</button>
+      <div class="gate-error" id="pinError">PIN-i nuk është i saktë. Provo sërish.</div>
+    </div>
+
+  </div>
+</div>
+
+<header class="app-header">
+  <div class="logo-badge"><svg viewBox="0 0 24 24"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg></div>
+  <div>
+    <div class="app-title">Sabi</div>
+    <div class="app-subtitle">Muzikë falas</div>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="home">
+    <svg viewBox="0 0 24 24"><path d="M12 3l9 8h-3v9h-4v-6H10v6H6v-9H3l9-8z"/></svg>
+    Kryefaqja
+  </button>
+  <button class="tab-btn" data-tab="search">
+    <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
+    Kërko
+  </button>
+  <button class="tab-btn" data-tab="favorites">
+    <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+    Të preferuarat
+  </button>
+</nav>
+
+<main>
+  <!-- ===== Kryefaqja ===== -->
+  <section id="tab-home">
+    <div class="section-title">Më të dëgjuarat Shqip 🇦🇱</div>
+    <div class="track-list" id="homeList"></div>
+  </section>
+
+  <!-- ===== Kërko ===== -->
+  <section id="tab-search" hidden>
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
+      <input id="searchInput" type="search" placeholder="Kërko këngë ose artistë shqiptarë…" autocomplete="off">
+    </div>
+    <div class="chips" id="artistChips"></div>
+    <div class="track-list" id="searchList"></div>
+  </section>
+
+  <!-- ===== Të preferuarat ===== -->
+  <section id="tab-favorites" hidden>
+    <div class="section-title">Të preferuarat</div>
+    <div class="track-list" id="favList"></div>
+  </section>
+</main>
+
+<!-- ===== Mini player ===== -->
+<div class="mini-player" id="miniPlayer">
+  <div class="mini-player-inner">
+    <img class="mp-art" id="mpArt" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" >
+    <div class="mp-info">
+      <div class="mp-label">Po luhet</div>
+      <div class="mp-title" id="mpTitle">—</div>
+      <div class="mp-artist" id="mpArtist">—</div>
+      <div class="mp-progress"><div class="mp-progress-bar" id="mpProgress"></div></div>
+    </div>
+    <button class="icon-btn led-toggle" id="ledToggle" aria-label="Ndez ose fik LED">💡</button>
+    <button class="mp-play" id="mpPlay" aria-label="Luaj ose ndalo">
+      <svg id="mpPlayIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    </button>
+  </div>
+</div>
+
+<audio id="audio" preload="none"></audio>
+
+<script>
+(function () {
+  'use strict';
+
+  var AUD_HOSTS = [
+    'https://discoveryprovider.audius.co',
+    'https://discoveryprovider3.audius.co',
+    'https://audius-discovery-provider-4.protocol.ai'
+  ];
+  var AUD_APP = 'Sabi';
+  var LS_FAV = 'sabi.favorites';
+
+  var state = {
+    favorites: loadFavorites(),
+    currentTrack: null,
+    playing: false
+  };
+
+  function loadFavorites() {
+    try {
+      var raw = localStorage.getItem(LS_FAV);
+      var parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed.filter(function (t) { return t && t.id && t.name; }) : [];
+    } catch (e) { return []; }
+  }
+  function saveFavorites() {
+    localStorage.setItem(LS_FAV, JSON.stringify(state.favorites));
+  }
+  function isFav(id) {
+    for (var i = 0; i < state.favorites.length; i++) {
+      if (state.favorites[i].id === id) return true;
+    }
+    return false;
+  }
+  function toggleFav(t) {
+    var idx = -1;
+    for (var i = 0; i < state.favorites.length; i++) {
+      if (state.favorites[i].id === t.id) { idx = i; break; }
+    }
+    if (idx === -1) {
+      state.favorites.unshift({
+        id: t.id, name: t.name, artist: t.artist,
+        artwork: t.artwork, duration: t.duration
+      });
+    } else {
+      state.favorites.splice(idx, 1);
+    }
+    saveFavorites();
+  }
+
+  // ===== Elementet =====
+  var $ = function (id) { return document.getElementById(id); };
+  var gate = $('gate'), audio = $('audio');
+  var miniPlayer = $('miniPlayer'), mpPlay = $('mpPlay'), mpPlayIcon = $('mpPlayIcon');
+  var PLAY_PATH = 'M8 5v14l11-7z';
+  var PAUSE_PATH = 'M6 19h4V5H6v14zm8-14v14h4V5h-4z';
+
+  // ===== Hyrja me PIN =====
+  var PIN_CODE = '12';
+  var LS_PIN = 'sabi.pin_ok';
+
+  function hideGate() { gate.classList.add('hidden'); }
+
+  $('pinSubmit').addEventListener('click', checkPin);
+  $('pinInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') checkPin();
+  });
+
+  function checkPin() {
+    if ($('pinInput').value.trim() === PIN_CODE) {
+      $('pinError').style.display = 'none';
+      localStorage.setItem(LS_PIN, '1');
+      hideGate();
+      loadHome();
+    } else {
+      $('pinError').style.display = 'block';
+      $('pinInput').value = '';
+      $('pinInput').focus();
+    }
+  }
+
+  // ===== API (Audius — pa çelës) =====
+  function audUrl(host, path, params) {
+    return host + path + '?app_name=' + AUD_APP + (params || '');
+  }
+  function streamUrl(t) {
+    return audUrl(AUD_HOSTS[0], '/v1/tracks/' + t.id + '/stream');
+  }
+  function downloadUrl(t) {
+    return audUrl(AUD_HOSTS[0], '/v1/tracks/' + t.id + '/download');
+  }
+
+  // ===== Shkarkimi i këngës si skedar MP3 =====
+  function downloadTrack(t, btn) {
+    if (btn.dataset.busy) return;
+    btn.dataset.busy = '1';
+    var oldHtml = btn.innerHTML;
+    btn.innerHTML = '<svg class="spin" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9v3a6 6 0 1 0 6 6z"/></svg>';
+    // Provon së pari skedarin zyrtar të shkarkimit, pastaj rrymën direkt të këngës —
+    // kështu punon shkarkimi për çdo këngë, jo vetëm për ato që e lejojnë qartë.
+    var fetchBlob = fetch(downloadUrl(t))
+      .then(function (r) {
+        if (!r.ok) throw new Error('no');
+        return r.blob();
+      })
+      .catch(function () {
+        return fetch(streamUrl(t)).then(function (r) {
+          if (!r.ok) throw new Error('no');
+          return r.blob();
+        });
+      });
+    fetchBlob
+      .then(function (blob) {
+        var a = document.createElement('a');
+        var url = URL.createObjectURL(blob);
+        a.href = url;
+        a.download = (t.artist || 'sabi') + ' - ' + (t.name || 'kenga') + '.mp3';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+        btn.innerHTML = oldHtml;
+        delete btn.dataset.busy;
+      })
+      .catch(function () {
+        alert('Shkarkimi dështoi për „' + (t.name || 'kënga') + '”. Kjo këngë mund të mos lejojë shkarkim. Provo një tjetër.');
+        btn.innerHTML = oldHtml;
+        delete btn.dataset.busy;
+      });
+  }
+
+  // Provon hostat një nga një, me timeout 8s secili.
+  function fetchTracks(makeUrl) {
+    var i = 0;
+    return new Promise(function (resolve, reject) {
+      function tryNext() {
+        if (i >= AUD_HOSTS.length) { reject(new Error('hosts')); return; }
+        var host = AUD_HOSTS[i++];
+        var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+        var timer = setTimeout(function () { if (ctrl) ctrl.abort(); tryNext(); }, 8000);
+        fetch(makeUrl(host), ctrl ? { signal: ctrl.signal } : undefined)
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (data && data.data && data.data.length) {
+              clearTimeout(timer);
+              resolve(data.data);
+            } else if (data && Array.isArray(data.data)) {
+              clearTimeout(timer);
+              resolve([]);
+            } else {
+              throw new Error('empty');
+            }
+          })
+          .catch(function (e) {
+            clearTimeout(timer);
+            if (e && e.name === 'AbortError') return; // timeria e ka thirrur tryNext
+            tryNext();
+          });
+      }
+      tryNext();
+    });
+  }
+
+  function normTrack(t) {
+    return {
+      id: t.id,
+      name: t.title || 'Pa titull',
+      artist: (t.user && t.user.name ? t.user.name.replace(/^@/, '') : 'Artist i panjohur'),
+      artwork: (t.artwork && (t.artwork['480x480'] || t.artwork['150x150'])) || '',
+      duration: t.duration || 0,
+      downloadable: !!(t.access && t.access.download && t.is_downloadable),
+      searchText: [(t.title || ''), (t.user && t.user.name) || '', t.genre || '',
+        t.tags || '', t.description || ''].filter(Boolean).join(' ').toLowerCase(),
+      playCount: t.play_count || 0
+    };
+  }
+
+  // ===== Filtri: vetëm këngë shqip =====
+  var ALB_KEYWORDS = ['shqip', 'albanian', 'alba', 'këng', 'tiron', 'tiran', 'prisht', 'shkod', 'durrës', 'vlorë', 'ulqin', 'kosov'];
+  function isAlbanian(t) {
+    if (!t.searchText) return false;
+    for (var i = 0; i < ALB_KEYWORDS.length; i++) {
+      if (t.searchText.indexOf(ALB_KEYWORDS[i]) !== -1) return true;
+    }
+    return false;
+  }
+
+  // ===== Skedat =====
+  var tabs = document.querySelectorAll('.tab-btn');
+  var sections = { home: $('tab-home'), search: $('tab-search'), favorites: $('tab-favorites') };
+
+  tabs.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var tab = btn.getAttribute('data-tab');
+      tabs.forEach(function (b) { b.classList.toggle('active', b === btn); });
+      Object.keys(sections).forEach(function (k) { sections[k].hidden = (k !== tab); });
+      if (tab === 'favorites') renderFavorites();
+    });
+  });
+
+  // ===== Kryefaqja (krejt muzika shqiptare) =====
+  var homeTracks = [];
+  var HOME_CORE = ['muzike shqip', 'këngë shqip', 'shqip', 'albanian',
+    'noizy', 'ledri vula', 'cozman', 'dhurata dora'];
+  var HOME_MORE = ['gjiko', 'buta', 'mc kresha', 'varrosi', 'king gold', 'marin',
+    'mozzik', 'elvana gjata', 'dafina zeqiri', 'capital t', 'lumi b', 'butrint imeri',
+    'ronela hajati', 'era istrefi', 'don xhoni', 'xhensila', 'tayna', 'elina'];
+
+  function gatherTracks(queries) {
+    return Promise.all(queries.map(function (query) {
+      return fetchTracks(function (host) {
+        return audUrl(host, '/v1/tracks/search', '&query=' + encodeURIComponent(query) + '&limit=50');
+      }).catch(function () { return []; });
+    }));
+  }
+
+  function mergeTracks(lists) {
+    var seen = {}, combined = [];
+    lists.forEach(function (list) {
+      list.forEach(function (raw) {
+        var t = normTrack(raw);
+        if (!seen[t.id]) {
+          seen[t.id] = true;
+          combined.push(t);
+        }
+      });
+    });
+    combined.sort(function (a, b) { return b.playCount - a.playCount; });
+    return combined;
+  }
+
+  function loadHome() {
+    $('homeList').innerHTML = '<div class="status"><div class="spinner"></div>Po ngarkohet muzika shqiptare…</div>';
+    gatherTracks(HOME_CORE).then(function (lists) {
+      homeTracks = mergeTracks(lists).slice(0, 40);
+      if (!homeTracks.length) {
+        $('homeList').innerHTML = '<div class="empty-state">Nuk u gjetën këngë.<br>Kontrollo lidhjen me internetin.</div>';
+        return;
+      }
+      renderTracks($('homeList'), homeTracks);
+      // Shtojmë më shumë artistë në sfond, pa pritur përdoruesin
+      setTimeout(function () {
+        gatherTracks(HOME_MORE).then(function (moreLists) {
+          homeTracks = mergeTracks([homeTracks, mergeTracks(moreLists)]).slice(0, 80);
+          if (!$('tab-home').hidden) renderTracks($('homeList'), homeTracks);
+        }).catch(function () {});
+      }, 3000);
+    }).catch(function () {
+      $('homeList').innerHTML = '<div class="empty-state">Nuk u ngarkuan këngët.<br>Kontrollo lidhjen me internetin.</div>';
+    });
+  }
+
+  // ===== Kërko =====
+  var searchTimer = null;
+  $('searchInput').addEventListener('input', function () {
+    var q = this.value.trim();
+    clearTimeout(searchTimer);
+    if (q.length < 2) {
+      $('searchList').innerHTML = '<div class="empty-state">Shkruaj të paktën 2 shkronja për të kërkuar.</div>';
+      return;
+    }
+    searchTimer = setTimeout(function () { doSearch(q); }, 350);
+  });
+
+  function doSearch(q) {
+    $('searchList').innerHTML = '<div class="status"><div class="spinner"></div>Po kërkohet…</div>';
+    fetchTracks(function (host) { return audUrl(host, '/v1/tracks/search', '&query=' + encodeURIComponent(q) + '&limit=30'); })
+      .then(function (raw) {
+        var results = raw.map(normTrack).sort(function (a, b) { return b.playCount - a.playCount; });
+        if (!results.length) {
+          $('searchList').innerHTML = '<div class="empty-state">Nuk u gjet asnjë këngë për „' + escapeHtml(q) + '”.</div>';
+          return;
+        }
+        renderTracks($('searchList'), results);
+      })
+      .catch(function () {
+        $('searchList').innerHTML = '<div class="empty-state">Kërkimi dështoi. Provo sërish.</div>';
+      });
+  }
+
+  // ===== Të preferuarat =====
+  function renderFavorites() {
+    var list = $('favList');
+    if (!state.favorites.length) {
+      list.innerHTML = '<div class="empty-state">Nuk ke asnjë këngë të preferuar.<br>Shtyp zemrën pranë një kënge për ta ruajtur këtu.</div>';
+      return;
+    }
+    renderTracks(list, state.favorites);
+  }
+
+  var searchResults = [];
+
+  // ===== Rreshtat =====
+  function renderTracks(listEl, tracks) {
+    if (listEl === $('searchList')) searchResults = tracks;
+    listEl.innerHTML = '';
+    tracks.forEach(function (t) {
+      listEl.appendChild(trackRow(t));
+    });
+  }
+
+  function trackRow(t) {
+    var card = document.createElement('div');
+    card.className = 'card';
+
+    var media = document.createElement('div');
+    media.className = 'card-media';
+
+    var img = document.createElement('img');
+    img.className = 'card-art';
+    img.src = t.artwork || 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+    img.alt = '';
+    img.loading = 'lazy';
+    media.appendChild(img);
+
+    var dur = document.createElement('span');
+    dur.className = 'card-dur';
+    dur.textContent = fmtTime(t.duration) || '—';
+    media.appendChild(dur);
+
+    // Zemra (të preferuarat)
+    var favBtn = document.createElement('button');
+    favBtn.className = 'card-heart' + (isFav(t.id) ? ' on' : '');
+    favBtn.setAttribute('aria-label', 'Shto te të preferuarat');
+    favBtn.innerHTML = heartSvg();
+    favBtn.addEventListener('click', function () {
+      toggleFav(t);
+      favBtn.classList.toggle('on', isFav(t.id));
+      favBtn.innerHTML = heartSvg();
+      if (!$('tab-favorites').hidden) renderFavorites();
+    });
+    media.appendChild(favBtn);
+
+    // Shkarkimi (MP3 përmes API-së, ruhet si skedar) — për çdo këngë
+    var dl = document.createElement('button');
+    dl.className = 'card-heart card-dl';
+    dl.setAttribute('aria-label', 'Shkarko');
+    dl.innerHTML = '<svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>';
+    dl.addEventListener('click', function () { downloadTrack(t, dl); });
+    media.appendChild(dl);
+
+    // Play
+    var playBtn = document.createElement('button');
+    playBtn.className = 'card-play';
+    playBtn.setAttribute('aria-label', 'Luaj');
+    playBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+    playBtn.addEventListener('click', function () {
+      if (state.currentTrack && state.currentTrack.id === t.id && state.playing) {
+        pause();
+      } else {
+        play(t, name);
+      }
+    });
+    media.appendChild(playBtn);
+
+    card.appendChild(media);
+
+    var info = document.createElement('div');
+    info.className = 'card-info';
+    var name = document.createElement('div');
+    name.className = 'card-title';
+    name.textContent = t.name || 'Pa titull';
+    var meta = document.createElement('div');
+    meta.className = 'card-meta';
+    meta.textContent = t.artist + ' · ' + fmtViews(t.playCount);
+    info.appendChild(name); info.appendChild(meta);
+    card.appendChild(info);
+
+    t._nameEl = name;
+    return card;
+  }
+
+  function heartSvg() {
+    return '<svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+  }
+
+  function fmtTime(sec) {
+    if (!sec || isNaN(sec)) return '';
+    var m = Math.floor(sec / 60), s = sec % 60;
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function fmtViews(n) {
+    if (!n) return '—';
+    if (n >= 1000000) return (n / 1000000).toFixed(1).replace('.0', '') + ' mln dëgjime';
+    if (n >= 1000) return Math.round(n / 1000) + ' mijë dëgjime';
+    return n + ' dëgjime';
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  // ===== Mini player & audio =====
+  function play(t, nameEl) {
+    if (state.currentTrack && state.currentTrack._nameEl) {
+      state.currentTrack._nameEl.classList.remove('now-playing');
+    }
+    state.currentTrack = t;
+    state.playing = true;
+    if (nameEl) nameEl.classList.add('now-playing');
+
+    $('mpArt').src = t.artwork || 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+    $('mpTitle').textContent = t.name || 'Pa titull';
+    $('mpArtist').textContent = t.artist || 'Artist i panjohur';
+    $('mpProgress').style.width = '0%';
+    miniPlayer.classList.add('visible');
+    mpPlayIcon.querySelector('path').setAttribute('d', PAUSE_PATH);
+    document.body.classList.add('playing');
+
+    audio.src = streamUrl(t);
+    audio.play().catch(function () {});
+  }
+
+  function pause() {
+    state.playing = false;
+    audio.pause();
+    mpPlayIcon.querySelector('path').setAttribute('d', PLAY_PATH);
+    document.body.classList.remove('playing');
+  }
+
+  mpPlay.addEventListener('click', function () {
+    if (!state.currentTrack) return;
+    if (state.playing) { pause(); }
+    else { audio.play().catch(function(){}); state.playing = true; mpPlayIcon.querySelector('path').setAttribute('d', PAUSE_PATH); document.body.classList.add('playing'); }
+  });
+
+  audio.addEventListener('timeupdate', function () {
+    if (!state.currentTrack || !state.currentTrack.duration) return;
+    var pct = (audio.currentTime / state.currentTrack.duration) * 100;
+    $('mpProgress').style.width = Math.min(100, pct) + '%';
+  });
+
+  audio.addEventListener('ended', function () {
+    state.playing = false;
+    mpPlayIcon.querySelector('path').setAttribute('d', PLAY_PATH);
+    $('mpProgress').style.width = '100%';
+    document.body.classList.remove('playing');
+  });
+
+  // ===== LED =====
+  var ledStrip = document.createElement('div');
+  ledStrip.className = 'led-strip';
+  for (var li = 0; li < 30; li++) {
+    var dot = document.createElement('div');
+    dot.className = 'led';
+    var hue = Math.round(li * 360 / 30);
+    var col = 'hsl(' + hue + ', 100%, 60%)';
+    dot.style.background = col;
+    dot.style.boxShadow = '0 0 8px ' + col;
+    dot.style.animationDelay = (li * 55) + 'ms';
+    ledStrip.appendChild(dot);
+  }
+  miniPlayer.appendChild(ledStrip);
+
+  function setLed(on) {
+    document.body.classList.toggle('led-on', on);
+    localStorage.setItem('sabi.led', on ? '1' : '0');
+    $('ledToggle').classList.toggle('led-active', on);
+  }
+  $('ledToggle').addEventListener('click', function () {
+    setLed(!document.body.classList.contains('led-on'));
+  });
+  if (localStorage.getItem('sabi.led') !== '0') setLed(true);
+
+  // ===== Rreshti i artistëve =====
+  var ARTISTS = ['Noizy', 'Ledri Vula', 'Cozman', 'Marin', 'King Gold', 'Dhurata Dora',
+    'Gjiko', 'Buta', 'Mc Kresha', 'Varrosi', 'Mozzik', 'Elvana Gjata', 'Dafina Zeqiri',
+    'Capital T', 'Lumi B', 'Butrint Imeri', 'Ronela Hajati', 'Era Istrefi', 'Don Xhoni',
+    'Xhensila', 'Tayna', 'Elina', 'Reona', 'Luana Vjollca'];
+  var chipsEl = $('artistChips');
+  ARTISTS.forEach(function (name) {
+    var c = document.createElement('button');
+    c.className = 'chip';
+    c.textContent = name;
+    c.addEventListener('click', function () {
+      $('searchInput').value = name;
+      doSearch(name);
+    });
+    chipsEl.appendChild(c);
+  });
+
+  // ===== Nisja =====
+  $('searchList').innerHTML = '<div class="empty-state">Shkruaj të paktën 2 shkronja për të kërkuar.</div>';
+  if (localStorage.getItem(LS_PIN) === '1') {
+    hideGate();
+    loadHome();
+  } else {
+    gate.classList.remove('hidden');
+  }
+})();
+</script>
+</body>
+</html>
